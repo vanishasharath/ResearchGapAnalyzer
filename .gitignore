@@ -1,8 +1,5 @@
-__pycache__/
-*.pyc
-.env
-venv/
-.env.local
-*.log
-.DS_Store
-.ipynb_checkpoints/
+chroma_db/
+*.sqlite3
+papers/
+uploads/
+*.pdf
