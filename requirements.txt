@@ -1,0 +1,17 @@
+streamlit
+langchain
+langchain-community
+langchain-core
+langchain-text-splitters
+langchain-chroma
+langchain-ollama
+sentence-transformers
+torch
+chromadb
+networkx
+matplotlib
+pandas
+scikit-learn
+nltk
+pymupdf
+pypdf
