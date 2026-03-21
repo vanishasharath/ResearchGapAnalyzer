@@ -1,5 +1,8 @@
+__pycache__/
+*.pyc
+.vscode/
 chroma_db/
-*.sqlite3
-papers/
 uploads/
+papers/
 *.pdf
+*.sqlite3
