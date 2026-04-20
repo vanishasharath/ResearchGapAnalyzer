@@ -1,9 +1,20 @@
 # ResearchGapAnalyzer
 
 
-An AI-powered system that analyzes research papers and identifies potential research gaps using **Retrieval-Augmented Generation (RAG)**, **vector search**, and **LLMs (Ollama)**.
+ResearchGapAnalyzer is an AI-powered system that analyzes research papers and identifies potential research gaps using Retrieval-Augmented Generation (RAG), vector search, and LLMs (Ollama). The system enables users to upload research papers (PDFs), extract meaningful insights, and discover unexplored areas within a domain. By combining semantic search, intelligent text chunking, and LLM-based analysis, the project provides context-aware understanding of research content.
 
-This project enables users to upload research papers, extract meaningful insights, and discover unexplored areas in a domain.
+It also incorporates paper clustering and knowledge graph generation to reveal relationships between concepts and group similar research topics. With fast retrieval powered by vector databases (ChromaDB) and an interactive interface built using Streamlit, the system simplifies and accelerates the literature review process.
+
+## 🎯 Objectives
+* To develop a system that can upload and process research papers (PDF) for analysis.
+* To implement intelligent text chunking for improved context understanding.
+* To perform semantic search using vector embeddings for accurate information retrieval.
+* To utilize Retrieval-Augmented Generation (RAG) with LLMs (Ollama) for contextual analysis.
+* To identify potential research gaps and generate meaningful insights.
+* To group similar research papers using clustering techniques.
+* To generate a knowledge graph representing relationships between key concepts.
+* To enable fast and efficient retrieval using a vector database (ChromaDB).
+* To build an interactive and user-friendly interface using Streamlit.
 
 ---
 
