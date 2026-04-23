@@ -1,15 +1,27 @@
-from langchain_ollama import OllamaLLM
+from groq import Groq
+import streamlit as st
 
-# Mistral via Ollama — capable local LLM, no API key needed.
-# Ensure Ollama is running: `ollama serve` and `ollama pull mistral`
-generator = OllamaLLM(model="tinyllama", temperature=0)
+class GroqGenerator:
+    def __init__(self, model="llama-3.3-70b-versatile", temperature=0):
+        self.client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+        self.model = model
+        self.temperature = temperature
+
+    def invoke(self, prompt):
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": str(prompt)}],
+            temperature=self.temperature
+        )
+        return type("Msg", (), {"content": response.choices[0].message.content})()
+
+generator = GroqGenerator(model="llama-3.3-70b-versatile", temperature=0)
 
 _MAX_CHARS_PER_DOC = 1500
-_MAX_DOCS = 5
+_MAX_DOCS = 10
 
 
 def analyze_docs(docs):
-
     context = ""
     for doc in docs[:_MAX_DOCS]:
         snippet = doc.page_content[:_MAX_CHARS_PER_DOC].strip()
@@ -37,4 +49,4 @@ RESEARCH EXCERPTS:
 {context.strip()}
 """
 
-    return generator.invoke(prompt)
+    return generator.invoke(prompt).content  # ← was missing return

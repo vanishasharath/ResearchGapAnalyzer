@@ -1,5 +1,9 @@
-import streamlit as st
 import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
+import streamlit as st
 import hashlib
 import tempfile
 import pandas as pd
@@ -52,30 +56,31 @@ def get_upload_hash(uploaded_files):
     return hashlib.md5(combined).hexdigest()
 
 
-def save_uploaded_files(uploaded_files):
-    """Save uploaded files to a temp directory and return their paths."""
-    tmp_dir = tempfile.mkdtemp()
-    file_paths = []
-    for file in uploaded_files:
-        path = os.path.join(tmp_dir, file.name)
-        with open(path, "wb") as f:
-            f.write(file.getbuffer())
-        file_paths.append(path)
-    return file_paths
-
-
 # ---------------------------------------------------
 # PROCESS PAPERS
-# Cached by file-content hash, not by mutable file paths.
 # ---------------------------------------------------
 
 @st.cache_resource
-def process_papers(file_paths, _upload_hash: str):
+def process_papers(_file_bytes_list, _upload_hash: str):
     """
     Load, chunk, and embed papers.
-    _upload_hash is used only as a cache-busting key.
+    _upload_hash is the cache-busting key.
+    _file_bytes_list is a list of (filename, bytes) tuples.
     """
+    tmp_dir = tempfile.mkdtemp()
+    file_paths = []
+    for name, data in _file_bytes_list:
+        path = os.path.join(tmp_dir, name)
+        with open(path, "wb") as f:
+            f.write(data)
+        file_paths.append(path)
+
+    print(f"DEBUG file_paths: {file_paths}")
+    print(f"DEBUG files exist: {[os.path.exists(p) for p in file_paths]}")
+
     papers = load_papers(file_paths)
+    print(f"DEBUG papers loaded: {len(papers)}")
+
     documents = chunk_papers(papers)
     vector_db = build_vector_db(documents)
     return papers, documents, vector_db
@@ -102,17 +107,18 @@ if uploaded_files:
 
     upload_hash = get_upload_hash(uploaded_files)
 
-    # Re-process only when the uploaded file set actually changes.
     if st.session_state.last_upload_hash != upload_hash:
         st.session_state.last_upload_hash = upload_hash
-        st.session_state.vector_db = None   # clear stale state
+        st.session_state.vector_db = None
+        process_papers.clear()  # ← force cache clear on new upload
 
     if st.session_state.vector_db is None:
         with st.spinner("Processing research papers…"):
             try:
-                file_paths = save_uploaded_files(uploaded_files)
+                file_bytes_list = [(f.name, f.getvalue()) for f in uploaded_files]
+                print(f"DEBUG uploading: {[name for name, _ in file_bytes_list]}")
                 papers, documents, vector_db = process_papers(
-                    file_paths, upload_hash
+                    file_bytes_list, upload_hash
                 )
                 st.session_state.papers = papers
                 st.session_state.documents = documents
@@ -133,13 +139,8 @@ vector_db = st.session_state.vector_db
 
 if vector_db:
 
-    # ---------------------------------------------------
-    # FIX: n_papers counts unique source files, not chunks.
-    # PyPDFLoader creates one Document per PAGE, so len(papers)
-    # returns total pages, not total PDFs. Count unique sources.
-    # ---------------------------------------------------
     unique_sources = set(
-        doc.metadata.get("source", "") for doc in papers
+        os.path.basename(doc.metadata.get("source", "")) for doc in papers
     )
     n_papers = len(unique_sources)
     n_chunks = len(documents) if documents else 0
@@ -149,10 +150,6 @@ if vector_db:
     col1, col2 = st.columns(2)
     col1.metric("Papers Loaded", n_papers)
     col2.metric("Total Chunks", n_chunks)
-
-    # ---------------------------------------------------
-    # TABS
-    # ---------------------------------------------------
 
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "Research Gap Analysis",
@@ -191,12 +188,7 @@ if vector_db:
         if st.button("Generate Literature Review"):
             with st.spinner("Generating literature review… (this may take ~30s)"):
                 try:
-                    docs = retrieve_chunks(
-                        vector_db,
-                        "research methodology contribution findings",
-                        k=8
-                    )
-                    review = generate_literature_review(docs)
+                    review = generate_literature_review(documents)
                     st.markdown(review)
                 except Exception as e:
                     st.error(f"Literature review generation failed: {e}")
@@ -210,12 +202,7 @@ if vector_db:
         if st.button("Compare Papers"):
             with st.spinner("Comparing papers… (this may take ~30s)"):
                 try:
-                    docs = retrieve_chunks(
-                        vector_db,
-                        "methods datasets results performance evaluation",
-                        k=8
-                    )
-                    comparison = compare_papers(docs)
+                    comparison = compare_papers(documents)
                     st.markdown(comparison)
                 except Exception as e:
                     st.error(f"Paper comparison failed: {e}")
@@ -229,15 +216,13 @@ if vector_db:
         if st.button("Detect Method Trends"):
             with st.spinner("Detecting methods…"):
                 try:
-                    # Use all documents for method detection — no LLM call,
-                    # just regex so we can scan everything cheaply.
                     freq = detect_method_frequency(documents)
                     if freq:
                         df = pd.DataFrame(
                             freq.items(),
                             columns=["Method", "Frequency"]
                         ).sort_values("Frequency", ascending=False)
-                        st.dataframe(df, use_container_width=True)
+                        st.dataframe(df, width='stretch')
                         st.bar_chart(df.set_index("Method"))
                     else:
                         st.warning(
@@ -261,8 +246,8 @@ if vector_db:
         )
 
         max_docs_graph = st.slider(
-            "Chunks to include", min_value=5,
-            max_value=max(5, n_chunks), value=min(15, n_chunks), step=5
+            "Chunks to include", min_value=10,
+            max_value=max(10, n_chunks), value=min(20, n_chunks), step=10
         )
 
         if st.button("Generate Graph"):
@@ -276,7 +261,6 @@ if vector_db:
                         fig, ax = plt.subplots(figsize=(12, 7))
                         pos = nx.spring_layout(G, seed=42, k=0.8)
 
-                        # Scale edge width by weight
                         weights = [
                             G[u][v].get("weight", 1)
                             for u, v in G.edges()
@@ -330,7 +314,7 @@ if vector_db:
             with st.spinner("Clustering papers…"):
                 try:
                     fig = cluster_papers(
-                        documents[:max_docs_cluster],
+                        documents,
                         num_clusters=num_clusters
                     )
                     st.pyplot(fig)
