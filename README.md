@@ -36,7 +36,7 @@ It also incorporates paper clustering and knowledge graph generation to reveal r
 
 * **Python**
 * **Streamlit** (Frontend UI)
-* **Ollama** (Local LLM inference)
+* **Ollama(Mistral)** (Local LLM inference)
 * **ChromaDB** (Vector database)
 * **NLP & Embeddings**
 * **NetworkX / Graph tools** (for knowledge graph)
