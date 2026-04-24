@@ -1,19 +1,27 @@
 # ResearchGapAnalyzer
 
 
-ResearchGapAnalyzer is an AI-powered system that analyzes research papers and identifies potential research gaps using Retrieval-Augmented Generation (RAG), vector search, and LLMs (Ollama). The system enables users to upload research papers (PDFs), extract meaningful insights, and discover unexplored areas within a domain. By combining semantic search, intelligent text chunking, and LLM-based analysis, the project provides context-aware understanding of research content.
+ResearchGapAnalyzer is an AI-powered system that analyzes research papers and identifies potential research gaps using Retrieval-Augmented Generation (RAG), vector search, and LLMs. The system enables users to upload research papers (PDFs), extract meaningful insights, and discover unexplored areas within a domain. By combining semantic search, intelligent text chunking, and LLM-based analysis, the project provides context-aware understanding of research content.
+It also incorporates paper clustering and knowledge graph generation to reveal relationships between concepts and group similar research topics. With fast retrieval powered by FAISS and an interactive interface built using Streamlit, the system simplifies and accelerates the literature review process.
 
-It also incorporates paper clustering and knowledge graph generation to reveal relationships between concepts and group similar research topics. With fast retrieval powered by vector databases (ChromaDB) and an interactive interface built using Streamlit, the system simplifies and accelerates the literature review process.
+---
+
+## 🌐 Live Demo
+* URL:  https://researchgapanalyzer-dmrz27egtrybwnzvmhkk4j.streamlit.app/
+* 
+  "Note:  First load may take 1-2 mins on free tier. If the app is inactive, click Manage app → Reboot app to restart."
+
+---
 
 ## 🎯 Objectives
 * To develop a system that can upload and process research papers (PDF) for analysis.
 * To implement intelligent text chunking for improved context understanding.
 * To perform semantic search using vector embeddings for accurate information retrieval.
-* To utilize Retrieval-Augmented Generation (RAG) with LLMs (Ollama) for contextual analysis.
+* To utilize Retrieval-Augmented Generation (RAG) with LLMs for contextual analysis.
 * To identify potential research gaps and generate meaningful insights.
 * To group similar research papers using clustering techniques.
 * To generate a knowledge graph representing relationships between key concepts.
-* To enable fast and efficient retrieval using a vector database (ChromaDB).
+* To enable fast and efficient retrieval using FAISS vector search.
 * To build an interactive and user-friendly interface using Streamlit.
 
 ---
@@ -22,25 +30,30 @@ It also incorporates paper clustering and knowledge graph generation to reveal r
 
 * 📄 Upload and process research papers (PDF)
 * ✂️ Intelligent text chunking for better context understanding
-* 🔍 Semantic search using vector embeddings
-* 🤖 LLM-based analysis using **Ollama (local models)**
+* 🔍 Semantic search using vector embeddings (FastEmbed)
+* 🤖 LLM-based analysis using Groq API (Llama 3.3 70B)
 * 📊 Research gap identification and insights generation
+* 📝 Automated literature review generation
+* 🆚 Side-by-side paper comparison
+* 📈 Method trend detection across papers
 * 🧠 Paper clustering to group similar research topics
 * 🌐 Knowledge graph generation for concept relationships
-* ⚡ Fast retrieval using vector database (ChromaDB)
+* ⚡ Fast retrieval using FAISS vector database
 * 🖥 Interactive UI using Streamlit
 
 ---
 
 ## 🛠 Tech Stack
 
-* **Python**
-* **Streamlit** (Frontend UI)
-* **Ollama(Mistral)** (Local LLM inference)
-* **ChromaDB** (Vector database)
-* **NLP & Embeddings**
-* **NetworkX / Graph tools** (for knowledge graph)
-* **PDF Processing Libraries**
+* Python
+* Streamlit- (Frontend UI)
+* Groq API (Llama 3.3 70B) — LLM inference (free, cloud-based)
+* FAISS — Vector database for fast similarity search
+* FastEmbed (BAAI/bge-small-en-v1.5) — Lightweight embeddings
+* LangChain — RAG pipeline
+* scikit-learn — Paper clustering (KMeans + PCA)
+* NetworkX / Graph tools (for knowledge graph)
+* PDF Processing Libraries
 
 ---
 
@@ -74,7 +87,7 @@ research-gap-project/
 3. 🔢 Embeddings are generated
 4. 📦 Stored in vector database (ChromaDB)
 5. 🔍 Relevant chunks retrieved based on query
-6. 🤖 LLM (Ollama) generates insights
+6. 🤖 Groq LLM (Llama 3.3 70B) generates insights
 7. 📊 Outputs research gaps, clusters, and relationships
 
 ---
@@ -118,12 +131,13 @@ streamlit run streamlit_app.py
 
 * Retrieval-Augmented Generation (RAG)
 * Semantic search using embeddings
-* Vector databases (ChromaDB)
-* LLM integration (Ollama)
+* Vector databases (FAISS)
+* LLM integration (Groq API)
 * NLP preprocessing and chunking
-* Clustering algorithms
+* Clustering algorithms (KMeans + PCA)
 * Knowledge graph construction
 * Modular system design
-
+* Cloud deployment (Streamlit Community Cloud)
+  
 ---
 
