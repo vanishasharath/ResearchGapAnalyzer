@@ -1,12 +1,9 @@
 import atexit
 import os
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
-os.environ["HF_DATASETS_OFFLINE"] = "1"
 import shutil
 import tempfile
 
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import FastEmbedEmbeddings
+
 from fastembed import TextEmbedding
 
 embedding_model = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
@@ -29,7 +26,9 @@ atexit.register(_cleanup_temp_dirs)
 
 
 def build_vector_db(documents):
-
+    from langchain_community.embeddings import FastEmbedEmbeddings
+    from langchain_community.vectorstores import FAISS
+    
     embedding_model = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
 
     persist_dir = tempfile.mkdtemp(prefix="chroma_session_")
