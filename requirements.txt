@@ -13,4 +13,6 @@ matplotlib
 networkx
 scikit-learn
 nltk
-chromadb
+chromadb==0.4.24
+protobuf==3.20.3
+opentelemetry-exporter-otlp-proto-grpc==1.17.0
