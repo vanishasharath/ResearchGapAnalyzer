@@ -5,7 +5,7 @@ os.environ["HF_DATASETS_OFFLINE"] = "1"
 import shutil
 import tempfile
 
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import FastEmbedEmbeddings
 from fastembed import TextEmbedding
 
@@ -38,10 +38,6 @@ def build_vector_db(documents):
     # across repeated Streamlit re-runs.
     _temp_dirs.append(persist_dir)
 
-    vector_db = Chroma.from_documents(
-        documents,
-        embedding_model,
-        persist_directory=persist_dir
-    )
+    vector_db = FAISS.from_documents(documents, embedding_model)
 
     return vector_db
