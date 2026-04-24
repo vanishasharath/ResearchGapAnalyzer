@@ -127,6 +127,27 @@ streamlit run streamlit_app.py
 
 ---
 
+## 🐳 Docker
+
+You can also run this app locally using Docker.
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+
+### Run with Docker
+
+```bash
+# Build the image
+docker build -t research-gap-analyzer .
+
+# Run the app
+docker run -p 8501:8501 -e GROQ_API_KEY=your_groq_api_key_here research-gap-analyzer
+```
+
+Then open http://localhost:8501 in your browser.
+
+---
+
 ## 🧠 Key Concepts Demonstrated
 
 * Retrieval-Augmented Generation (RAG)
