@@ -7,3 +7,4 @@ uploads/
 papers/
 *.pdf
 *.sqlite3.streamlit/secrets.toml
+.streamlit/secrets.toml
