@@ -3,37 +3,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sentence_transformers import SentenceTransformer
+from collections import defaultdict
+import random
 import streamlit as st
-
-@st.cache_resource(show_spinner=False)
-def load_embedding_model():
-    return SentenceTransformer("all-MiniLM-L6-v2")
 
 
 def cluster_papers(papers, num_clusters=3):
     if not papers:
         raise ValueError("No documents provided for clustering.")
 
-    model = load_embedding_model()
+    # ← use fastembed instead of sentence_transformers (much lighter, no torch)
+    from fastembed import TextEmbedding
+    embed_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
-    # ← group chunks by source paper
-    from collections import defaultdict
-    import random
-
+    # group chunks by source paper
     paper_chunks = defaultdict(list)
     for doc in papers:
         source = doc.metadata.get("source", "unknown")
         paper_chunks[source].append(doc)
 
-    # ← take RANDOM chunks from each paper (better representation)
+    # take random chunks from each paper for better representation
     balanced_docs = []
     chunks_per_paper = max(1, num_clusters * 3)
     for source, chunks in paper_chunks.items():
-        selected = random.sample(
-            chunks,
-            min(len(chunks), chunks_per_paper)
-        )
+        selected = random.sample(chunks, min(len(chunks), chunks_per_paper))
         balanced_docs.extend(selected)
 
     if not balanced_docs:
@@ -41,7 +34,9 @@ def cluster_papers(papers, num_clusters=3):
 
     texts = [doc.page_content for doc in balanced_docs]
     num_clusters = min(num_clusters, len(texts))
-    embeddings = model.encode(texts, show_progress_bar=False)
+
+    # generate embeddings with fastembed
+    embeddings = np.array(list(embed_model.embed(texts)))
 
     # clustering
     kmeans = KMeans(n_clusters=num_clusters, random_state=42, n_init="auto")
@@ -54,12 +49,9 @@ def cluster_papers(papers, num_clusters=3):
         return doc.page_content[:40].strip() + "…"
 
     clusters: dict[int, list[str]] = {i: [] for i in range(num_clusters)}
-
-    # ✅ FIX: use balanced_docs instead of papers
     for i, label in enumerate(labels):
         clusters[int(label)].append(get_label(balanced_docs[i]))
 
-    # ✅ better duplicate removal (preserves order)
     for k in clusters:
         clusters[k] = list(dict.fromkeys(clusters[k]))
 
