@@ -13,4 +13,4 @@ matplotlib
 networkx
 scikit-learn
 sentence-transformers
-nltk
+nltk# force reinstall
