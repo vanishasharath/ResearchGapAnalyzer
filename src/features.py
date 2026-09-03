@@ -3,28 +3,47 @@ import re
 from groq import Groq
 import os
 import streamlit as st
-client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+
 
 class GroqGenerator:
-    def __init__(self, model="llama-3.3-70b-versatile", temperature=0):
-        self.client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+    def __init__(self, model="llama-3.1-8b-instant", temperature=0):
+        self.client = Groq(api_key=st.secrets["GROQ_API_KEY"])
         self.model = model
         self.temperature = temperature
 
     def invoke(self, prompt):
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": str(prompt)}],
-            temperature=self.temperature
-        )
-        # Mimic .content attribute like ChatOllama returns
-        return type("Msg", (), {"content": response.choices[0].message.content})()
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": str(prompt)
+                    }
+                ],
+                temperature=self.temperature
+            )
 
-# Drop-in replacement — no other code changes needed
-generator = GroqGenerator(model="llama-3.3-70b-versatile", temperature=0)
+            return type(
+                "Msg",
+                (),
+                {
+                    "content": response.choices[0].message.content
+                }
+            )()
+
+        except Exception as e:
+            raise Exception(f"Groq API Error: {str(e)}")
+
+
+generator = GroqGenerator(
+    model="llama-3.1-8b-instant",
+    temperature=0
+)
 
 _MAX_CHARS_PER_DOC = 1500
-_MAX_DOCS = 6  # ← was 5, you have 6 papers
+_MAX_DOCS = 6
+
 
 _METHODS = [
     "transformer", "bert", "gpt", "t5", "roberta", "xlnet", "albert",
@@ -58,11 +77,14 @@ _METHODS = [
 
 def detect_method_frequency(docs):
     found_methods = []
+
     for doc in docs:
         text = doc.page_content.lower()
+
         for method in _METHODS:
             if re.search(rf"\b{re.escape(method)}\b", text):
                 found_methods.append(method)
+
     return dict(Counter(found_methods))
 
 
@@ -71,24 +93,34 @@ def detect_method_frequency(docs):
 # ---------------------------------------------------
 
 def generate_literature_review(docs):
-    print(f"Total docs passed: {len(docs)}")
-    for doc in docs:
-        print(f"  source: {doc.metadata.get('source', 'NONE')}")
     seen_sources = {}
+
     for doc in docs:
-        source = os.path.basename(doc.metadata.get("source", "unknown"))  # ← basename
+        source = os.path.basename(
+            doc.metadata.get("source", "unknown")
+        )
+
         if source not in seen_sources:
             seen_sources[source] = doc
 
     unique_docs = list(seen_sources.values())[:_MAX_DOCS]
 
     context = ""
-    for i, doc in enumerate(unique_docs):
-        source_name = os.path.basename(doc.metadata.get("source", f"Paper {i+1}"))
-        snippet = doc.page_content[:_MAX_CHARS_PER_DOC].strip()
-        context += f"[Paper {i+1}: {source_name}]\n{snippet}\n\n"
 
-    prompt = f"""You are an academic writer. Write a coherent literature review based on the research excerpts below.
+    for i, doc in enumerate(unique_docs):
+        source_name = os.path.basename(
+            doc.metadata.get("source", f"Paper {i+1}")
+        )
+
+        snippet = doc.page_content[:_MAX_CHARS_PER_DOC].strip()
+
+        context += (
+            f"[Paper {i+1}: {source_name}]\n"
+            f"{snippet}\n\n"
+        )
+
+    prompt = f"""
+You are an academic writer. Write a coherent literature review based on the research excerpts below.
 
 Structure your review as flowing paragraphs (NOT bullet points) covering:
 - The main research themes and problems being addressed
@@ -96,8 +128,12 @@ Structure your review as flowing paragraphs (NOT bullet points) covering:
 - How the papers relate to or build upon each other
 - Key findings and contributions
 
-Write at least 4 paragraphs. Do not repeat sentences. Be specific about paper contributions.
+Write at least 4 paragraphs.
+Do not repeat sentences.
+Be specific about paper contributions.
+
 Do NOT include any file paths, system information, or metadata in your response.
+
 Refer to papers as "Paper 1", "Paper 2" etc. or by their topic.
 
 RESEARCH EXCERPTS:
@@ -106,28 +142,41 @@ RESEARCH EXCERPTS:
 
     return generator.invoke(prompt).content
 
+
 # ---------------------------------------------------
 # Feature 3: Paper Comparison
 # ---------------------------------------------------
 
-import os
-
 def compare_papers(docs):
     seen_sources = {}
+
     for doc in docs:
-        source = os.path.basename(doc.metadata.get("source", "unknown"))  # ← basename only
+        source = os.path.basename(
+            doc.metadata.get("source", "unknown")
+        )
+
         if source not in seen_sources:
             seen_sources[source] = doc
 
     unique_docs = list(seen_sources.values())[:_MAX_DOCS]
 
     context = ""
-    for i, doc in enumerate(unique_docs):
-        source_name = os.path.basename(doc.metadata.get("source", f"Paper {i+1}"))
-        snippet = doc.page_content[:_MAX_CHARS_PER_DOC].strip()
-        context += f"[Paper {i+1}: {source_name}]\n{snippet}\n\n"
 
-    prompt = f"""You are a research analyst. Compare the research approaches in the excerpts below.
+    for i, doc in enumerate(unique_docs):
+        source_name = os.path.basename(
+            doc.metadata.get("source", f"Paper {i+1}")
+        )
+
+        snippet = doc.page_content[:_MAX_CHARS_PER_DOC].strip()
+
+        context += (
+            f"[Paper {i+1}: {source_name}]\n"
+            f"{snippet}\n\n"
+        )
+
+    prompt = f"""
+You are a research analyst. Compare the research approaches in the excerpts below.
+
 There are {len(unique_docs)} papers total — compare ALL of them.
 
 Provide a structured comparison with these FOUR sections:
@@ -144,11 +193,12 @@ What does each approach do well?
 ## Weaknesses
 What are the limitations or shortcomings of each approach?
 
-Be specific and reference details from the text. Use bullet points within each section.
+Be specific and reference details from the text.
+Use bullet points within each section.
 Refer to papers as "Paper 1", "Paper 2" etc.
 
 RESEARCH EXCERPTS:
 {context.strip()}
 """
 
-    return generator.invoke(prompt).content  # ← was missing return
+    return generator.invoke(prompt).content
