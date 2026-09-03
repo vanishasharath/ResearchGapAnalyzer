@@ -3,7 +3,7 @@ import streamlit as st
 
 
 class GroqGenerator:
-    def __init__(self, model="llama-3.1-8b-instant", temperature=0):
+    def __init__(self, model="groq/compound-mini", temperature=0):
         self.client = Groq(api_key=st.secrets["GROQ_API_KEY"])
         self.model = model
         self.temperature = temperature
@@ -34,7 +34,7 @@ class GroqGenerator:
 
 
 generator = GroqGenerator(
-    model="llama-3.1-8b-instant",
+    model="groq/compound-mini",
     temperature=0
 )
 
